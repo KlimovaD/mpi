@@ -113,7 +113,7 @@ map<std::string, int> calculateFreq(int id){
 int main(int argc, char *argv[])
 {
 	std::vector<float>times;
-	auto&& reps = 1;
+	auto&& reps = 10;
 	for (int rep = 0; rep < reps; ++rep){
 		cout << "rep=" << rep << endl;
 		setlocale(LC_ALL, "rus");
@@ -146,16 +146,12 @@ int main(int argc, char *argv[])
 		std::chrono::time_point<std::chrono::system_clock> start, end;
 		start = std::chrono::system_clock::now();
 		auto&& map = calculateFreq(rank);
-		//end = std::chrono::system_clock::now();
-		//int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds> (end-start).count();
-		//cout<<"elapsed "<<rank<<" "<<elapsed_seconds<<endl;	
 	    std::stringstream ss;
 	    MPI_Status st;
 		if(rank != 0){
 			std::stringstream ss;
 			boost::archive::text_oarchive oa(ss); 
-			oa & map; 
-			cout<<rank<<" send size="<<map.size()<<endl;
+			oa & map;
 			int size = ss.str().size(); 
 			MPI_Send(&size, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
 			MPI_Send(const_cast<char*>(ss.str().c_str()), ss.str().size(), MPI_CHAR, 0, 0, MPI_COMM_WORLD);
@@ -174,7 +170,6 @@ int main(int argc, char *argv[])
 				boost::archive::text_iarchive ia(ss); 
 				std::map<std::string, int> recmap;
 				ia >> recmap; // No size/range needed
-				cout<<"rec from "<<st.MPI_SOURCE<<" size="<<recmap.size()<<endl;
 				merge_apply(recmap.begin(), recmap.end(), genMap.begin(), genMap.end(), inserter(cmap, cmap.begin()),
 						compare_first<pair<std::string, int> >, sum_pairs<pair<std::string, int> >);
 				genMap = cmap;
